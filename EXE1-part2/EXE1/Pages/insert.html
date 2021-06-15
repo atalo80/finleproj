@@ -1,0 +1,430 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link href="StyleSheet1.css" rel="stylesheet" />
+    <style type="text/css">
+
+        #ph > img {
+            height: 300px;
+        }
+        .red-star {
+            color: red;
+        }
+        #ph > button {
+            width: 200px;
+        }
+
+        #main div {
+            float: left;
+            margin: 2px;
+        }
+
+        #ph2 {
+            display: inline-flex;
+        }
+
+        #ph {
+            display: inline-flex;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous">
+    </script>
+    <script src="../Scripts/ajaxCalls.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    
+
+    <script>
+
+        // https://api.themoviedb.org/3/search/tv?api_key=1c107f2bd2f3fc2aee24aa4f2f8d8647&language=en-US&page=1&include_adult=false&query=Grey%27s%20Anatomy
+
+        $(document).ready(function () {
+            myHide();
+            $("#getTV").click(getTV);
+            ArrySeason = [];// Arry for seasons TV
+            // replace it with your own key
+            key = "18101ed9c7467340900d0eb37d8dc325";
+            num = 1; // Varies to count the seasons
+            seasoNum = 0; //
+            url = "https://api.themoviedb.org/";
+            imagePath = "https://image.tmdb.org/t/p/w500/";
+            // 64467
+            // 1416
+            $("#pForm").submit(f1);//Submit BTN
+            //https://api.themoviedb.org/3/tv/1416/season/0/episode/64467?api_key=1c107f2bd2f3fc2aee24aa4f2f8d8647&language=en-US
+            arr = [];//To save users in localStorage
+            $('#LogIn').click(f2);
+            $('#MYLogout').click(logout);
+        });
+        function myHide() {
+            $("#tvShowName").hide();
+            $("#getTV").hide();
+            $("#view").hide();
+            $("#MYLogout").hide();
+            $("#ph").html("");
+            $("#ph2").html("");
+        }
+        function mySowe() {
+            $("#tvShowName").show();
+            $("#getTV").show();
+            $("#view").show();
+            $("#LogIn").hide();
+            $("#ph").html("");
+            $("#ph2").html("");
+        }
+        function logout() {
+            $("#nameuser").hide();
+            $("#tvShowName").hide();
+            $("#getTV").hide();
+            $("#view").hide();
+            $("#MYLogout").hide(); 
+            $("#ph").html("");
+            $("#ph2").html("");
+        }
+        ///------------------------------Movie-server function---------------------------------
+
+        // get a season from the remote server
+        function getTV() {
+            let name = $("#tvShowName").val();
+            let method = "3/search/tv?";
+            let api_key = "api_key=" + key;
+            let moreParams = "&language=en-US&page=1&include_adult=false&";
+            let query = "query=" + encodeURIComponent(name);
+            let apiCall = url + method + api_key + moreParams + query;
+            ajaxCall("GET", apiCall, "", getTVSuccessCB, getTVErrorCB);
+        }
+        //get a tvshow from the remote server Failed
+        function getTVErrorCB(err) {
+            console.log("bad");
+        }
+        // get a series from the remote server
+        function getTVSuccessCB(tv) { 
+            series = tv.results[0];
+            tvId = series.id;
+            let poster = imagePath + series.poster_path;
+            if (num == 1) {
+                let str = "<img src='" + poster + "'/>";
+                $("#ph").html(str);
+            }
+            let method = "3/tv/";
+            let api_key = "api_key=" + key; 
+            let apiCall = url + method + tvId + "/season/" + num + "?" + api_key;
+            ajaxCall("GET", apiCall, "", getSeasonSuccessCB, getSeasonErrorCB)
+            if (num == 2) { 
+                let tv1 = {
+                    id: series.id,
+                    name: series.name,
+                    first_air_date: series.first_air_date,
+                    origin_country: series.origin_country[0],
+                    original_language: series.original_language,
+                    overview: series.overview,
+                    popularity: series.popularity,
+                    poster_path: series.poster_path
+                }
+                let api = "../api/Episodes/TV";
+                ajaxCall("POST", api, JSON.stringify(tv1), postTVSuccessCB, postTVErrorCB)
+            }
+        }
+       
+        //Success of pulling a season, and printing the season to the page
+        function getSeasonSuccessCB(season) {
+            ArrySeason.push(season); //push season to Arry of seasons
+            let str1 = "";
+            str1 += "<br><button id='" + season.name + "' onclick='showS(this.id)' value='" + num + "'>" + season.name + "</button><br>";
+            $("#ph").append(str1);
+            num++;
+            getTV();
+        }
+        //Error accessing server to take the season
+        function getSeasonErrorCB() {
+            num = 1; // Varies to count the seasons
+            console.log("bad");
+            
+        } 
+        //Success accessing server to take the series
+        // get a series from the remote server
+        function postTVSuccessCB() {
+            console.log("good");
+        }  //Error accessing server to take the series
+        function postTVErrorCB() {
+            console.log("bad");
+
+        } 
+
+
+        // View all episodes of the selected season
+        function showS(tvname) {
+            seasoNum = document.getElementById(tvname).value;
+            for (var y = 0; y < ArrySeason.length; y++) {
+                if (tvname == ArrySeason[y].name) {
+                    let season = ArrySeason[y];
+                    let str = "";
+                    for (var i = 0; i < season.episodes.length; i++) {
+                        season.episodes[i].episode_number
+                        str += "<div><p id='Name" + i + "'>" + season.episodes[i].name + "</p>";
+                        str += "<div><p id='Episode_number" + i + "'>" + season.episodes[i].episode_number + "</p>";
+                        str += "<img id='img" + i + "'" + "src='" + imagePath + season.episodes[i].still_path + "'/>";
+                        str += "<p id='date" + i + "'>" + season.episodes[i].air_date + "</p>";
+                        str += "<p id='Overview" + i + "'>" + season.episodes[i].overview + "</p>";
+                        str += "<button id='" + i + "' onclick='addEpisode(this.id)'>" + " add episode</button></div>";
+                    }
+                    $("#ph2").html(str);
+                }
+            }
+            $("#MYLogout").show();
+        }
+
+        preferences = new Object();
+        //onclick event- Build a Episode object and save to the internal server
+        function addEpisode(count) {
+            let episode = {
+                Tvid: tvId,
+                NameTvshows: $("#tvShowName").val(),
+                Season: seasoNum,
+                NameEpisod: $("#Name" + count).text(),
+                Picture: $("#img" + count).attr('src'),
+                Overview: $("#Overview" + count).text(),
+                Date: $("#date" + count).text(),
+                Episode_number: parseInt($("#Episode_number" + count).text())
+            }
+
+            preferences = {
+                Idserise: tvId,
+                Idusers: 1,
+                Episode: episode
+             }
+            let api = "../api/Episodes";
+            ajaxCall("POST", api, JSON.stringify(preferences), postEpisodesSuccessCB, postEpisodesErrorCB)
+
+        }
+        //Saving of the object was successful
+        function postEpisodesSuccessCB() {
+            console.log("good");
+        }
+
+        //Failed to save object
+        function postEpisodesErrorCB() {
+            console.log("bad");
+        }
+        //Saving of the object was successful
+        function postPreferncsSuccessCB() {
+            console.log("good");
+        }
+
+        //Failed to save object
+        function postPreferncsErrorCB() {
+            console.log("bad");
+        }
+
+
+        // Get the modal
+        var modal = document.getElementById('id01');
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        ///------------------------------registration function---------------------------------
+
+        function f1() {
+            AddUser();
+
+            return false; // the return false will prevent the form from being submitted
+            // hence the page will not reload
+        }
+
+        //Build a User object and save to the internal server
+
+        function AddUser() {
+            let user = {
+                Name: $("#nameTB").val(),
+                LastName: $("#lastNameTB").val(),
+                Email: $("#emailTB").val(),
+                Password: $("#passwordTB").val(),
+                Phone: $("#PhoneTB").val(),
+                Gender:$("#genderTB").val(),
+                YearofBirth: parseInt($("#yearofBirthTB").val()),
+                FavoriteStyle: $("#favoriteStyleTB").val(),
+                Addresses: $("#addressesTB").val()
+            }
+            let api = "../api/Users";
+            ajaxCall("POST", api, JSON.stringify(user), postUsersSuccessCB, postUsersErrorCB)
+            swal("Submitted to the server!", "Great Job", "success");
+        }
+
+        //Saving of the object was successful
+        function postUsersSuccessCB() {
+            swal("Added Successfuly!", "Great Job", "success");
+        }
+
+        //Failed to save object
+        function postUsersErrorCB() {
+            console.log("bad");
+        }
+
+        ///--------------------------------------login function-------------------------------------
+        function f2() {
+            getLogIn();
+            return false;
+        }
+        function getLogIn() {
+            let name = $("#uname").val();
+            let password = $("#psw").val();
+            let api = "../api/Users?name=" + name + "&" + "password=" + password;
+            ajaxCall("GET", api, "", getUsersSuccessCB, getUsersErrorCB)
+
+        }
+        
+        function getUsersSuccessCB(Users) {
+                str = "<h3> hi " + Users.Name + " " + Users.LastName + "</h3>";
+            $("#nameuser").html(str);
+            mySowe();
+                // Put the object into storage
+                Users.password = null;
+                arr.push(Users);//Save a user who was able to connect
+                localStorage.setItem('Users', JSON.stringify(arr)); 
+        }
+        function getUsersErrorCB(err) {
+            if (err.status == "404")
+                alert("got 404: " + err.responseJSON.Message);
+           else alert(arr.status);
+        } 
+    </script>
+
+</head>
+<body>
+    <div id="nameuser">
+
+    </div>
+
+    <div id="pForm" class="modal">
+        <form class="modal-content animate">
+            <div class="imgcontainer">
+                <span onclick="document.getElementById('pForm').style.display='none'" class="close" title="Close Modal">&times;</span>
+            </div>
+            <div class="container">
+                <h2>registration</h2>
+                <div class="form-group">
+                    <label for="nameTB"><span class="red-star">★ </span>Name</label>
+                    <input type="text" class="form-control" id="nameTB" placeholder="Enter the the name" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastNameTB"><span class="red-star">★ </span>lastName</label>
+                    <input type="text" class="form-control" id="lastNameTB" placeholder="Enter the the lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="emailTB"><span class="red-star">★ </span>email</label>
+                    <input type="text" class="form-control" id="emailTB" placeholder="Enter the the email" required>
+                </div>
+                <div class="form-group">
+                    <label for="passwordTB"><span class="red-star">★ </span>password</label>
+                    <input type="password" class="form-control" id="passwordTB" placeholder="Enter the the password" required
+                           pattern="^(?=.*\d)(?=.*[A-Z])([^\s]){6,}">
+                </div>
+                <div class="form-group">
+                    <label for="PhoneTB"><span class="red-star">★ </span>Phone</label>
+                    <input type="text" class="form-control" id="PhoneTB" placeholder="Enter the the Phone" required
+                           pattern="[0][0-9]{2}-[0-9]{7}">
+                </div>
+                <div class="form-group">
+                    <label for="genderTB"><span class="red-star">★ </span>gender</label>
+                    <select id="genderTB" required>
+                        <!--required will not accept "" value-->
+                        <option value="">Choose gender</option>
+                        <option value="F">female</option>
+                        <option value="M">male</option>
+                        <option value="O">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="yearofBirthTB"><span class="red-star">★ </span>year of Birth</label>
+                    <input type="text" class="form-control" id="yearofBirthTB" placeholder="Enter the the year of Birth" required>
+                </div>
+                <div class="form-group">
+                    <label for="favoriteStyleTB">favoriteStyle</label>
+                    <select id="favoriteStyleTB">
+                        <!--required will not accept "" value-->
+                        <option value="">Choose favorite Style</option>
+                        <option value="Action">Action</option>
+                        <option value="Adventure">Adventure</option>
+                        <option value="Animated">Animated</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Drama">Drama</option>
+                        <option value="Fantasy">Fantasy</option>
+                        <option value="Historical">Historical</option>
+                        <option value="Horror">Horror</option>
+                        <option value="Sciencefiction">Science fiction</option>
+                        <option value="Thriller">Thriller</option>
+                        <option value="Western">Western</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="addressesTB"><span class="red-star">★ </span>addresses</label>
+                    <input type="text" class="form-control" id="addressesTB" placeholder="Enter the the addresses" required autocomplete="on">
+                </div>
+                <input type="submit" value="Submit BTN" />
+            </div>
+            <div class="container" style="background-color:#f1f1f1">
+                <button type="button" onclick="document.getElementById('pForm').style.display='none'" class="cancelbtn">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+
+    <div id="id01" class="modal">
+
+        <form class="modal-content animate" action="/action_page.php" method="post">
+            <div class="imgcontainer">
+                <span onclick="document.getElementById('id01').style.display='none'" class="close" title="Close Modal">&times;</span>
+            </div>
+
+            <div class="container">
+                <label for="uname"><b>Username</b></label>
+                <input type="text" id="uname" placeholder="Enter Username" name="uname" required>
+
+                <label for="psw"><b>Password</b></label>
+                <input type="password" id="psw" placeholder="Enter Password" name="psw" required>
+
+                <button id="LogIn">Login</button>
+            </div>
+
+            <div class="container" style="background-color:#f1f1f1">
+                <button type="button" onclick="document.getElementById('id01').style.display='none'" class="cancelbtn">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <div>
+        <br>
+        <button onclick="document.getElementById('id01').style.display='block'" style="width:auto;">Login</button>
+    </div>
+    <div>
+        <br>
+        <button onclick="document.getElementById('pForm').style.display='block'" style="width:auto;">registration</button>
+    </div>
+    <button id="MYLogout">Logout</button>
+    <br>
+    <input type="text" id="tvShowName" />
+    <button id="getTV">Get TV Show</button>
+    <br>
+    <button onclick="document.location='view.html'">view</button>
+    <br>
+    <div id="main">
+        <div id="ph">
+
+        </div>
+        <div id="ph2">
+
+        </div>
+    </div>
+</body>
+</html>

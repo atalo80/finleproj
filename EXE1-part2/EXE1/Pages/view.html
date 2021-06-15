@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+
+    <style type="text/css">
+        #ph  {
+            width:500px;
+            margin: 0px auto;
+            text-align:center;
+        }
+        
+        #ph > img {
+            height: 300px;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+            crossorigin="anonymous">
+    </script>
+
+    <script src="../Scripts/ajaxCalls.js"></script>
+    
+
+    <script>
+
+        function init() {
+            let api = "../api/Episodes";
+            ajaxCall("GET", api, "", getEpisodesSucceCB, getEpisodesErrorCB)
+        }
+
+       
+
+        function getEpisodesSucceCB(tvShow) {
+            let str = "<select  onchange='getselectTv(this)'>";
+            str += "<option>Select One</option>";
+            for (var i = 0; i < tvShow.length; i++) {
+                str += "<option value='" + tvShow[i] + "'>" + tvShow[i] + "</option>";
+            }
+            str += "</select>";
+            $("#ph1").html(str);
+        }
+        function getEpisodesErrorCB() {
+            console.log("bad");
+        }
+
+        //------------------------
+
+        function getselectTv(tvShow) {
+            let query =encodeURIComponent(tvShow.value);
+            let api = "../api/Episodes?nameTvshows=" + query;
+            ajaxCall("GET", api, "", getEpisodesSuccessCB2, getEpisodesErrorCB2)
+        }
+       
+        function getEpisodesSuccessCB2(Episodes) {
+            let str = "<div><h1>" + Episodes[0].NameTvshows + "</h1>";
+            for (var i = 0; i < Episodes.length; i++) {
+                str += "<p>" + Episodes[i].NameEpisod + "</p>";
+                str += "<p>Season: " + Episodes[i].Season + "</p>";
+                str += "<p> air-date: " + Episodes[i].Date + "</p>";
+                str += "<img src='" + Episodes[i].Picture + "'>";
+                str += "<p>" + Episodes[i].Overview + "</p></div><br>";
+                str += "<p>-----------------------------------------------------------------------------------</p><br>";   
+            }
+            $("#ph").html(str);
+        }
+        function getEpisodesErrorCB2(err) {
+            console.log(err);
+        }
+      
+
+
+
+    </script>
+
+</head>
+<body onload="init()">
+
+    <div id="ph1">
+
+    </div>
+    <div id="ph">
+
+    </div>
+
+</body>
+</html>
